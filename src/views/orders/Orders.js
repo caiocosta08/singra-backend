@@ -39,7 +39,7 @@ import {
 } from '@mui/icons-material';
 
 import io from 'socket.io-client';
-// const socket = io('http://192.168.1.113:3000');
+const socket = io('https://goldfish-app-4t6d6.ondigitalocean.app/');
 
 const BasicCard = (props) => {
   return (
@@ -48,9 +48,6 @@ const BasicCard = (props) => {
       style={{ margin: 10, width: 200, height: 200, color: '#fff' }}
     >
       <CardContent onClick={props.onClick}>
-        {/* <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-          Word of the Day
-        </Typography> */}
         <Typography variant="h5" component="div">
           {props.order.client}
         </Typography>
@@ -63,22 +60,12 @@ const BasicCard = (props) => {
             <AttachMoney /> {props.payment_status}
           </div>
         </Typography>
-        {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
-          {props.order.date}
-        </Typography> */}
-        {/* <Typography variant="body2">
-          well meaning and kindly.
-          <br />
-          {'"a benevolent smile"'}
-        </Typography> */}
       </CardContent>
     </Card>
   );
 };
 
 BasicCard.propTypes = {
-  // visible: PropTypes.bool,
-  // onAdd: PropTypes.func,
   onClick: PropTypes.func,
   order: PropTypes.object,
   color: PropTypes.string,
@@ -120,6 +107,15 @@ const Orders = () => {
     ],
   });
 
+  socket.on('connect', () => {
+    console.log('connected');
+  });
+
+  socket.on('refresh_orders', (data) => {
+    console.log('here');
+    setOrders(data.reverse());
+  });
+
   const addItemAndUpdatePrice = (item) => {
     let tempItems = newOrderData.items;
     let exists = tempItems.findIndex((i) => i._id == item._id);
@@ -151,8 +147,6 @@ const Orders = () => {
       price: newOrderData.price - item.price,
       items: tempItems,
     });
-
-    // setNewOrderData({ ...newOrderData, price: newOrderData.price - item.price, items: tempItems })
   };
 
   const getTextStatus = (status) => {
@@ -240,9 +234,9 @@ const Orders = () => {
   };
 
   React.useEffect(() => {
-    setInterval(() => {
-      update();
-    }, 3500);
+    // setInterval(() => {
+    update();
+    // }, 3500);
   }, []);
 
   const renderOrderModal = () => {
@@ -374,7 +368,6 @@ const Orders = () => {
           {newOrderData?.items &&
             newOrderData?.items.map((i) => {
               return (
-                // <div key={i.id + new Date()}>
                 <div style={{ marginBottom: 5 }} key={i.id}>
                   {' - '}
                   <strong>
@@ -484,10 +477,8 @@ const Orders = () => {
   };
 
   const update = async () => {
-    // setOrders([])
     await OrdersService.getOrders().then((r) => {
       setOrders(r.reverse());
-      // setOrders(r);
       getInfo(r.reverse());
     });
   };
