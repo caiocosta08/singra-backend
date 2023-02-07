@@ -1,0 +1,13 @@
+@import "variables";
+
+$enable-ltr: true;
+$enable-rtl: true;
+
+@import "@coreui/coreui/scss/coreui";
+
+@import "@coreui/chartjs/scss/coreui-chartjs";
+
+@import "layout";
+@import "example";
+
+@import "custom";
