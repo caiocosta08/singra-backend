@@ -1,14 +1,10 @@
-import React from 'react'
-// import Products from './views/products/Products'
-import Finance from './views/finance/Finance'
+import React from 'react';
 
-const Orders = React.lazy(() => import('./views/orders/Orders'))
+const Usuarios = React.lazy(() => import('./views/modules/usuarios/Index'));
 
 const routes = [
-  { path: '/', exact: true, name: 'Pedidos', element: Orders },
-  { path: '/orders', name: 'Pedidos', element: Orders },
-  { path: '/finance', name: 'Financeiro', element: Finance },
-  // { path: '/products', name: 'Produtos', element: Products },
-]
+  { path: '/', exact: true, name: 'Dashboard', element: Usuarios },
+  { path: '/usuarios', name: 'Usuários', element: Usuarios },
+];
 
-export default routes
+export default routes;

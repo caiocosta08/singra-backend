@@ -1,5 +1,5 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
   CButton,
   CCard,
@@ -9,10 +9,17 @@ import {
   CModalBody,
   CModalTitle,
   CModalFooter,
-} from '@coreui/react'
-import { Alert, TextField, Snackbar, InputLabel, Select, MenuItem } from '@mui/material'
-import * as ProductsService from '../../services/products.service'
-import {formatMoney} from '../../services/utils.service'
+} from '@coreui/react';
+import {
+  Alert,
+  TextField,
+  Snackbar,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
+import * as ProductsService from '../../../services/products.service';
+import { formatMoney } from '../../../services/utils.service';
 
 const ModalAddItem = (props) => {
   const [items, setItems] = React.useState([
@@ -26,19 +33,19 @@ const ModalAddItem = (props) => {
     // { id: 8, title: 'Santa Josemaria com guaraná', price: 2500 },
     // { id: 9, title: 'Santa Josemaria com suco', price: 2500 },
     // { id: 10, title: 'Açaí', price: 3000 },
-  ])
+  ]);
 
-  const [selectedItem, setSelectedItem] = React.useState({})
+  const [selectedItem, setSelectedItem] = React.useState({});
 
   const getProducts = async () => {
     const products = await ProductsService.getProducts();
-    if(products) setItems(products)
-    else setItems([])
-  }
+    if (products) setItems(products);
+    else setItems([]);
+  };
 
   React.useEffect(() => {
-    getProducts()
-  }, [])
+    getProducts();
+  }, []);
 
   return (
     <>
@@ -51,15 +58,16 @@ const ModalAddItem = (props) => {
             <Select
               value={selectedItem}
               onChange={(event) => {
-                setSelectedItem(event.target.value)
+                setSelectedItem(event.target.value);
               }}
             >
               {items.map((i) => {
                 return (
                   <MenuItem key={i.id} value={i}>
-                    {i.title} { '(' + formatMoney(i.price) + ')'}
+                    {i.title} {'(' + i.quantity + ')'}{' '}
+                    {' - ' + formatMoney(i.price) + ''}
                   </MenuItem>
-                )
+                );
               })}
             </Select>
           </CModalBody>
@@ -70,8 +78,8 @@ const ModalAddItem = (props) => {
             <CButton
               color="primary"
               onClick={() => {
-                props.onAdd(selectedItem)
-                props.onClose()
+                props.onAdd(selectedItem);
+                props.onClose();
               }}
             >
               Confirmar
@@ -80,12 +88,12 @@ const ModalAddItem = (props) => {
         </CModal>
       )}
     </>
-  )
-}
+  );
+};
 ModalAddItem.propTypes = {
   visible: PropTypes.bool,
   onAdd: PropTypes.func,
   onClose: PropTypes.func,
-}
+};
 
-export default ModalAddItem
+export default ModalAddItem;
