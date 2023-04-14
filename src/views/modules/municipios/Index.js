@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { renderToString } from 'react-dom/server';
 import {
   CButton,
   CCard,
@@ -11,7 +12,7 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as MunicipiosService from '../../../services/municipios.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   CardActions,
   Box,
 } from '@mui/material';
+
 import { Button } from '@coreui/coreui';
 import {
   Add,
@@ -38,6 +40,9 @@ import {
   FoodBank,
 } from '@mui/icons-material';
 
+
+
+
 const BasicCard = (props) => {
   return (
     <Card
@@ -46,12 +51,12 @@ const BasicCard = (props) => {
     >
       <CardContent onClick={props.onClick}>
         <Typography variant="h5" component="div">
-          {props.usuario.client}
+          {props.municipio.client}
         </Typography>
         <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
         <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
+          {props.municipio.description !== ''
+            ? 'OBS: ' + props.municipio.description
             : ''}{' '}
           <div>
             <AttachMoney /> {props.payment_status}
@@ -64,33 +69,24 @@ const BasicCard = (props) => {
 
 BasicCard.propTypes = {
   onClick: PropTypes.func,
-  usuario: PropTypes.object,
+  municipio: PropTypes.object,
   color: PropTypes.string,
   status: PropTypes.string,
   payment_status: PropTypes.string,
 };
 
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const Municipios = () => {
+  const [municipioModalVisible, setMunicipioModalVisible] = React.useState(false);
+  const [addMunicipioModalVisible, setAddMunicipioModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
+  const [currentMunicipio, setCurrentMunicipio] = React.useState({});
+  const [municipios, setMunicipios] = React.useState([]);
+  const [newMunicipioData, setNewMunicipioData] = React.useState({
     codigo: '',
     nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
-    situacao_de_registro: '',
+    vinculacao_regional: '',
+    idh_2022: '',
   });
   const [alertBox, setAlertBox] = React.useState({
     visible: false,
@@ -98,28 +94,31 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderMunicipioModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={municipioModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
-          <CModalTitle>Detalhes do usuário</CModalTitle>
+        <CModalHeader closeButton={false} onClose={() => setMunicipioModalVisible(false)}>
+          <CModalTitle>Detalhes do município</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          Código: <strong>{currentMunicipio.codigo}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
+          Nome: <strong>{currentMunicipio.nome}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          Vinculação regional: <strong>{currentMunicipio.vinculacao_regional}</strong>
+        </div>
+        <div style={{ marginLeft: 10, marginTop: 10 }}>
+          IDH 2022: <strong>{currentMunicipio.idh_2022}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteMunicipio(currentMunicipio.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +127,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setMunicipioModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,26 +136,25 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddMunicipioModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addMunicipioModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddMunicipioModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Município</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
-          <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewMunicipioData({ ...newMunicipioData, codigo: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newMunicipioData.codigo}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o código"
@@ -164,12 +162,12 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewMunicipioData({
+                ...newMunicipioData,
                 nome: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newMunicipioData.nome}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o nome"
@@ -177,44 +175,42 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
+              setNewMunicipioData({
+                ...newMunicipioData,
+                vinculacao_regional: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.cpf}
+            defaultValue={newMunicipioData.vinculacao_regional}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o CPF"
+            label="Digite a vinculação regional"
             variant="filled"
           />
-          {/* <InputLabel style={{ marginBottom: 10 }}>
-            Método de Pagamento
-          </InputLabel>
-          <Select
-            value={newUsuarioData.payment_method}
-            onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
-                payment_method: event.target.value,
-              });
-            }}
-          >
-            <MenuItem value="pix">Pix</MenuItem>
-            <MenuItem value="dinheiro">Dinheiro</MenuItem>
-          </Select> */}
+          <TextField
+            onChange={(e) =>
+              setNewMunicipioData({
+                ...newMunicipioData,
+                idh_2022: e.target.value,
+              })
+            }
+            defaultValue={newMunicipioData.idh_2022}
+            style={{ marginTop: 5, marginBottom: 5 }}
+            id="filled-basic"
+            label="Digite o IDH 2022"
+            variant="filled"
+          />
         </CModalBody>
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddMunicipioModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addMunicipio(newMunicipioData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,30 +222,30 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addMunicipio = async (municipio) => {
+    const status = await MunicipiosService.add(municipio);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Município adicionado com sucesso!',
         severity: 'success',
       });
     else
       setAlertBox({
         visible: true,
-        text: 'Erro ao adicionar usuário.',
+        text: 'Erro ao adicionar município.',
         severity: 'error',
       });
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteMunicipio = async (municipio_id) => {
+    const status = await MunicipiosService.remove(municipio_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Município excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -257,7 +253,7 @@ const Usuarios = () => {
       deleteSuccess()
       setAlertBox({
         visible: true,
-        text: 'Erro ao excluir usuário.',
+        text: 'Erro ao excluir município.',
         severity: 'error',
       });
     }
@@ -265,75 +261,54 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
+    setAddMunicipioModalVisible(false);
+    setNewMunicipioData({
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      vinculacao_regional: '',
+      idh_2022: '',
     });
-    atualizarUsuarios();
+    atualizarMunicipios();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
-    // valueGetter: (params) => `${params.row.id || ''}`,
+    { field: 'codigo', headerName: 'Código', width: 200 },
+    { field: 'nome', headerName: 'Nome', width: 200 },
+    { field: 'vinculacao_regional', headerName: 'Vinculação regional', width: 200 },
+    { field: 'idh_2022', headerName: 'IDH 2022', width: 200 },
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
+    setMunicipioModalVisible(false);
+    setCurrentMunicipio({
+      id: '',
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      vinculacao_regional: '',
+      idh_2022: '',
     });
-    atualizarUsuarios();
+    atualizarMunicipios();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentMunicipio(row);
+    setMunicipioModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarMunicipios = async () => {
+    const municipiosAtualizados = await MunicipiosService.getAll();
+    setMunicipios(municipiosAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarMunicipios();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {municipioModalVisible && renderMunicipioModal()}
+      {addMunicipioModalVisible && renderAddMunicipioModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +346,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddMunicipioModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Município <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Municípios</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +359,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={municipios}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +377,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default Municipios;

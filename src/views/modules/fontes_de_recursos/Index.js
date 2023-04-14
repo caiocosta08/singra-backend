@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { renderToString } from 'react-dom/server';
 import {
   CButton,
   CCard,
@@ -11,7 +12,7 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as FontesDeRecursosService from '../../../services/fontes_de_recursos.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   CardActions,
   Box,
 } from '@mui/material';
+
 import { Button } from '@coreui/coreui';
 import {
   Add,
@@ -38,59 +40,17 @@ import {
   FoodBank,
 } from '@mui/icons-material';
 
-const BasicCard = (props) => {
-  return (
-    <Card
-      sx={{ cursor: 'pointer', backgroundColor: props.color }}
-      style={{ margin: 10, width: 200, height: 200, color: '#fff' }}
-    >
-      <CardContent onClick={props.onClick}>
-        <Typography variant="h5" component="div">
-          {props.usuario.client}
-        </Typography>
-        <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
-        <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
-            : ''}{' '}
-          <div>
-            <AttachMoney /> {props.payment_status}
-          </div>
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-};
-
-BasicCard.propTypes = {
-  onClick: PropTypes.func,
-  usuario: PropTypes.object,
-  color: PropTypes.string,
-  status: PropTypes.string,
-  payment_status: PropTypes.string,
-};
-
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const FontesDeRecursos = () => {
+  const [fonteDeRecursoModalVisible, setFonteDeRecursoModalVisible] = React.useState(false);
+  const [addFonteDeRecursoModalVisible, setAddFonteDeRecursoModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
+  const [currentFonteDeRecurso, setCurrentFonteDeRecurso] = React.useState({});
+  const [fontesDeRecursos, setFontesDeRecursos] = React.useState([]);
+  const [newFonteDeRecursoData, setNewFonteDeRecursoData] = React.useState({
     codigo: '',
     nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
-    situacao_de_registro: '',
+    nome_abreviado: '',
   });
   const [alertBox, setAlertBox] = React.useState({
     visible: false,
@@ -98,28 +58,28 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderFonteDeRecursoModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={fonteDeRecursoModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
-          <CModalTitle>Detalhes do usuário</CModalTitle>
+        <CModalHeader closeButton={false} onClose={() => setFonteDeRecursoModalVisible(false)}>
+          <CModalTitle>Detalhes do fonte de recurso</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          Código: <strong>{currentFonteDeRecurso.codigo}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
+          Nome: <strong>{currentFonteDeRecurso.nome}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          Nome abreviado: <strong>{currentFonteDeRecurso.nome_abreviado}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteFonteDeRecurso(currentFonteDeRecurso.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +88,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setFonteDeRecursoModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,26 +97,25 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddFonteDeRecursoModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addFonteDeRecursoModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddFonteDeRecursoModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Fonte de Recurso</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
-          <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewFonteDeRecursoData({ ...newFonteDeRecursoData, codigo: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newFonteDeRecursoData.codigo}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o código"
@@ -164,12 +123,12 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewFonteDeRecursoData({
+                ...newFonteDeRecursoData,
                 nome: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newFonteDeRecursoData.nome}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o nome"
@@ -177,44 +136,29 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
+              setNewFonteDeRecursoData({
+                ...newFonteDeRecursoData,
+                nome_abreviado: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.cpf}
+            defaultValue={newFonteDeRecursoData.nome_abreviado}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o CPF"
+            label="Digite o nome abreviado"
             variant="filled"
           />
-          {/* <InputLabel style={{ marginBottom: 10 }}>
-            Método de Pagamento
-          </InputLabel>
-          <Select
-            value={newUsuarioData.payment_method}
-            onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
-                payment_method: event.target.value,
-              });
-            }}
-          >
-            <MenuItem value="pix">Pix</MenuItem>
-            <MenuItem value="dinheiro">Dinheiro</MenuItem>
-          </Select> */}
         </CModalBody>
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddFonteDeRecursoModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addFonteDeRecurso(newFonteDeRecursoData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,30 +170,30 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addFonteDeRecurso = async (fonteDeRecurso) => {
+    const status = await FontesDeRecursosService.add(fonteDeRecurso);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Fonte de Recurso adicionado com sucesso!',
         severity: 'success',
       });
     else
       setAlertBox({
         visible: true,
-        text: 'Erro ao adicionar usuário.',
+        text: 'Erro ao adicionar fonte de recurso.',
         severity: 'error',
       });
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteFonteDeRecurso = async (fonteDeRecurso_id) => {
+    const status = await FontesDeRecursosService.remove(fonteDeRecurso_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Fonte de Recurso excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -257,7 +201,7 @@ const Usuarios = () => {
       deleteSuccess()
       setAlertBox({
         visible: true,
-        text: 'Erro ao excluir usuário.',
+        text: 'Erro ao excluir fonte de recurso.',
         severity: 'error',
       });
     }
@@ -265,75 +209,51 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
+    setAddFonteDeRecursoModalVisible(false);
+    setNewFonteDeRecursoData({
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      nome_abreviado: '',
     });
-    atualizarUsuarios();
+    atualizarFontesDeRecursos();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
-    // valueGetter: (params) => `${params.row.id || ''}`,
+    { field: 'codigo', headerName: 'Código', width: 220 },
+    { field: 'nome', headerName: 'Nome', width: 220 },
+    { field: 'nome_abreviado', headerName: 'Nome abreviado', width: 220 },
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
+    setFonteDeRecursoModalVisible(false);
+    setCurrentFonteDeRecurso({
+      id: '',
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      nome_abreviado: '',
     });
-    atualizarUsuarios();
+    atualizarFontesDeRecursos();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentFonteDeRecurso(row);
+    setFonteDeRecursoModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarFontesDeRecursos = async () => {
+    const fontesDeRecursosAtualizados = await FontesDeRecursosService.getAll();
+    setFontesDeRecursos(fontesDeRecursosAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarFontesDeRecursos();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {fonteDeRecursoModalVisible && renderFonteDeRecursoModal()}
+      {addFonteDeRecursoModalVisible && renderAddFonteDeRecursoModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +291,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddFonteDeRecursoModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Fonte de Recurso <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Fontes de Recursos</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +304,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={fontesDeRecursos}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +322,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default FontesDeRecursos;

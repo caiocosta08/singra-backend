@@ -5,7 +5,7 @@ const AppFooter = () => {
   return (
     <CFooter>
       <div>
-        Acutis Academy <span> contato@acutisacademy.com.br</span>
+        SINGRA <span> contato@singra.com.br</span>
       </div>
     </CFooter>
   )

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { renderToString } from 'react-dom/server';
 import {
   CButton,
   CCard,
@@ -11,7 +12,7 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as FuncoesService from '../../../services/funcoes.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   CardActions,
   Box,
 } from '@mui/material';
+
 import { Button } from '@coreui/coreui';
 import {
   Add,
@@ -38,6 +40,9 @@ import {
   FoodBank,
 } from '@mui/icons-material';
 
+
+
+
 const BasicCard = (props) => {
   return (
     <Card
@@ -46,12 +51,12 @@ const BasicCard = (props) => {
     >
       <CardContent onClick={props.onClick}>
         <Typography variant="h5" component="div">
-          {props.usuario.client}
+          {props.funcao.client}
         </Typography>
         <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
         <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
+          {props.funcao.description !== ''
+            ? 'OBS: ' + props.funcao.description
             : ''}{' '}
           <div>
             <AttachMoney /> {props.payment_status}
@@ -64,33 +69,22 @@ const BasicCard = (props) => {
 
 BasicCard.propTypes = {
   onClick: PropTypes.func,
-  usuario: PropTypes.object,
+  funcao: PropTypes.object,
   color: PropTypes.string,
   status: PropTypes.string,
   payment_status: PropTypes.string,
 };
 
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const Funcoes = () => {
+  const [funcaoModalVisible, setFuncaoModalVisible] = React.useState(false);
+  const [addFuncaoModalVisible, setAddFuncaoModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
+  const [currentFuncao, setCurrentFuncao] = React.useState({});
+  const [funcoes, setFuncoes] = React.useState([]);
+  const [newFuncaoData, setNewFuncaoData] = React.useState({
     codigo: '',
     nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
-    situacao_de_registro: '',
   });
   const [alertBox, setAlertBox] = React.useState({
     visible: false,
@@ -98,28 +92,25 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderFuncaoModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={funcaoModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
-          <CModalTitle>Detalhes do usuário</CModalTitle>
+        <CModalHeader closeButton={false} onClose={() => setFuncaoModalVisible(false)}>
+          <CModalTitle>Detalhes do função</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          Código: <strong>{currentFuncao.codigo}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
-        </div>
-        <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          Nome: <strong>{currentFuncao.nome}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteFuncao(currentFuncao.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +119,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setFuncaoModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,26 +128,26 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddFuncaoModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addFuncaoModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddFuncaoModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Função</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
           <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewFuncaoData({ ...newFuncaoData, codigo: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newFuncaoData.codigo}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o código"
@@ -164,57 +155,29 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewFuncaoData({
+                ...newFuncaoData,
                 nome: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newFuncaoData.nome}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o nome"
             variant="filled"
           />
-          <TextField
-            onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
-              })
-            }
-            defaultValue={newUsuarioData.cpf}
-            style={{ marginTop: 5, marginBottom: 5 }}
-            id="filled-basic"
-            label="Digite o CPF"
-            variant="filled"
-          />
-          {/* <InputLabel style={{ marginBottom: 10 }}>
-            Método de Pagamento
-          </InputLabel>
-          <Select
-            value={newUsuarioData.payment_method}
-            onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
-                payment_method: event.target.value,
-              });
-            }}
-          >
-            <MenuItem value="pix">Pix</MenuItem>
-            <MenuItem value="dinheiro">Dinheiro</MenuItem>
-          </Select> */}
         </CModalBody>
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddFuncaoModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addFuncao(newFuncaoData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,30 +189,30 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addFuncao = async (funcao) => {
+    const status = await FuncoesService.add(funcao);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Função adicionado com sucesso!',
         severity: 'success',
       });
     else
       setAlertBox({
         visible: true,
-        text: 'Erro ao adicionar usuário.',
+        text: 'Erro ao adicionar função.',
         severity: 'error',
       });
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteFuncao = async (funcao_id) => {
+    const status = await FuncoesService.remove(funcao_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Função excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -257,7 +220,7 @@ const Usuarios = () => {
       deleteSuccess()
       setAlertBox({
         visible: true,
-        text: 'Erro ao excluir usuário.',
+        text: 'Erro ao excluir função.',
         severity: 'error',
       });
     }
@@ -265,75 +228,48 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
+    setAddFuncaoModalVisible(false);
+    setNewFuncaoData({
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
     });
-    atualizarUsuarios();
+    atualizarFuncoes();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
-    // valueGetter: (params) => `${params.row.id || ''}`,
+    { field: 'codigo', headerName: 'Código', width: 200 },
+    { field: 'nome', headerName: 'Nome', width: 200 },
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
+    setFuncaoModalVisible(false);
+    setCurrentFuncao({
+      id: '',
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
     });
-    atualizarUsuarios();
+    atualizarFuncoes();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentFuncao(row);
+    setFuncaoModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarFuncoes = async () => {
+    const funcoesAtualizados = await FuncoesService.getAll();
+    setFuncoes(funcoesAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarFuncoes();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {funcaoModalVisible && renderFuncaoModal()}
+      {addFuncaoModalVisible && renderAddFuncaoModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +307,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddFuncaoModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Função <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Funções</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +320,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={funcoes}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +338,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default Funcoes;

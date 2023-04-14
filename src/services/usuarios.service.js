@@ -16,6 +16,6 @@ export const add = async (usuario) => {
 export const remove = async (usuario_id) => {
   return (await axios.delete('/usuarios/' + usuario_id)).data;
 };
-export const getUsuarios = async () => {
+export const getAll = async () => {
   return (await axios.get('/usuarios/')).data;
 };

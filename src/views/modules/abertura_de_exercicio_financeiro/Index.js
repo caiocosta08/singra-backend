@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { renderToString } from 'react-dom/server';
 import {
   CButton,
   CCard,
@@ -11,7 +12,7 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as AberturasDeExercicioFinanceiroService from '../../../services/abertura_de_exercicio_financeiro.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   CardActions,
   Box,
 } from '@mui/material';
+
 import { Button } from '@coreui/coreui';
 import {
   Add,
@@ -38,6 +40,9 @@ import {
   FoodBank,
 } from '@mui/icons-material';
 
+
+
+
 const BasicCard = (props) => {
   return (
     <Card
@@ -46,12 +51,12 @@ const BasicCard = (props) => {
     >
       <CardContent onClick={props.onClick}>
         <Typography variant="h5" component="div">
-          {props.usuario.client}
+          {props.exercicio.client}
         </Typography>
         <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
         <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
+          {props.exercicio.description !== ''
+            ? 'OBS: ' + props.exercicio.description
             : ''}{' '}
           <div>
             <AttachMoney /> {props.payment_status}
@@ -64,33 +69,22 @@ const BasicCard = (props) => {
 
 BasicCard.propTypes = {
   onClick: PropTypes.func,
-  usuario: PropTypes.object,
+  exercicio: PropTypes.object,
   color: PropTypes.string,
   status: PropTypes.string,
   payment_status: PropTypes.string,
 };
 
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const AberturasDeExercicioFinanceiro = () => {
+  const [exercicioModalVisible, setAberturaDeExercicioFinanceiroModalVisible] = React.useState(false);
+  const [addAberturaDeExercicioFinanceiroModalVisible, setAddAberturaDeExercicioFinanceiroModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
-    codigo: '',
-    nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
-    situacao_de_registro: '',
+  const [currentAberturaDeExercicioFinanceiro, setCurrentAberturaDeExercicioFinanceiro] = React.useState({});
+  const [exercicios, setAberturasDeExercicioFinanceiro] = React.useState([]);
+  const [newAberturaDeExercicioFinanceiroData, setNewAberturaDeExercicioFinanceiroData] = React.useState({
+    exercicio: '',
+    instituicao_id: '',
   });
   const [alertBox, setAlertBox] = React.useState({
     visible: false,
@@ -98,28 +92,28 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderAberturaDeExercicioFinanceiroModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={exercicioModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
-          <CModalTitle>Detalhes do usuário</CModalTitle>
+        <CModalHeader closeButton={false} onClose={() => setAberturaDeExercicioFinanceiroModalVisible(false)}>
+          <CModalTitle>Detalhes do exercício</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          ID: <strong>{currentAberturaDeExercicioFinanceiro.id}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
+          Exercício: <strong>{currentAberturaDeExercicioFinanceiro.exercicio}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          ID da Instituição: <strong>{currentAberturaDeExercicioFinanceiro.instituicao_id}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteAberturaDeExercicioFinanceiro(currentAberturaDeExercicioFinanceiro.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +122,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setAberturaDeExercicioFinanceiroModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,65 +131,52 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddAberturaDeExercicioFinanceiroModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addAberturaDeExercicioFinanceiroModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddAberturaDeExercicioFinanceiroModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Abertura De Exercicio Financeiro</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
-          <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
+          {/* <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel> */}
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewAberturaDeExercicioFinanceiroData({ ...newAberturaDeExercicioFinanceiroData, exercicio: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newAberturaDeExercicioFinanceiroData.exercicio}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o código"
+            label="Digite o exercício"
             variant="filled"
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                nome: e.target.value,
+              setNewAberturaDeExercicioFinanceiroData({
+                ...newAberturaDeExercicioFinanceiroData,
+                instituicao_id: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newAberturaDeExercicioFinanceiroData.instituicao_id}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o nome"
-            variant="filled"
-          />
-          <TextField
-            onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
-              })
-            }
-            defaultValue={newUsuarioData.cpf}
-            style={{ marginTop: 5, marginBottom: 5 }}
-            id="filled-basic"
-            label="Digite o CPF"
+            label="Digite o ID da Instituição"
             variant="filled"
           />
           {/* <InputLabel style={{ marginBottom: 10 }}>
             Método de Pagamento
           </InputLabel>
           <Select
-            value={newUsuarioData.payment_method}
+            value={newAberturaDeExercicioFinanceiroData.payment_method}
             onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewAberturaDeExercicioFinanceiroData({
+                ...newAberturaDeExercicioFinanceiroData,
                 payment_method: event.target.value,
               });
             }}
@@ -207,14 +188,14 @@ const Usuarios = () => {
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddAberturaDeExercicioFinanceiroModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addAberturaDeExercicioFinanceiro(newAberturaDeExercicioFinanceiroData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,30 +207,30 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addAberturaDeExercicioFinanceiro = async (exercicio) => {
+    const status = await AberturasDeExercicioFinanceiroService.add(exercicio);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Abertura De Exercicio Financeiro adicionado com sucesso!',
         severity: 'success',
       });
     else
       setAlertBox({
         visible: true,
-        text: 'Erro ao adicionar usuário.',
+        text: 'Erro ao adicionar exercício.',
         severity: 'error',
       });
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteAberturaDeExercicioFinanceiro = async (exercicio_id) => {
+    const status = await AberturasDeExercicioFinanceiroService.remove(exercicio_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Abertura De Exercicio Financeiro excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -257,7 +238,7 @@ const Usuarios = () => {
       deleteSuccess()
       setAlertBox({
         visible: true,
-        text: 'Erro ao excluir usuário.',
+        text: 'Erro ao excluir exercício.',
         severity: 'error',
       });
     }
@@ -265,75 +246,49 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
-      codigo: '',
-      nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+    setAddAberturaDeExercicioFinanceiroModalVisible(false);
+    setNewAberturaDeExercicioFinanceiroData({
+      exercicio: '',
+      instituicao_id: '',
     });
-    atualizarUsuarios();
+    atualizarAberturasDeExercicioFinanceiro();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
+    { field: 'exercicio', headerName: 'Exercício', width: 190 },
+    { field: 'instituicao_id', headerName: 'ID da Instituição', width: 190 },
     // valueGetter: (params) => `${params.row.id || ''}`,
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
-      codigo: '',
-      nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+    setAberturaDeExercicioFinanceiroModalVisible(false);
+    setCurrentAberturaDeExercicioFinanceiro({
+      id: '',
+      exercicio: '',
+      instituicao_id: '',
     });
-    atualizarUsuarios();
+    atualizarAberturasDeExercicioFinanceiro();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentAberturaDeExercicioFinanceiro(row);
+    setAberturaDeExercicioFinanceiroModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarAberturasDeExercicioFinanceiro = async () => {
+    const exerciciosAtualizados = await AberturasDeExercicioFinanceiroService.getAll();
+    setAberturasDeExercicioFinanceiro(exerciciosAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarAberturasDeExercicioFinanceiro();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {exercicioModalVisible && renderAberturaDeExercicioFinanceiroModal()}
+      {addAberturaDeExercicioFinanceiroModalVisible && renderAddAberturaDeExercicioFinanceiroModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +326,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddAberturaDeExercicioFinanceiroModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Abertura De Exercicio Financeiro <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Abertura De Exercicio Financeiro</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +339,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={exercicios}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +357,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default AberturasDeExercicioFinanceiro;

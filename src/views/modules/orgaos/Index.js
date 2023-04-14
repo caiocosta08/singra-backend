@@ -1,6 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-
 import {
   CButton,
   CCard,
@@ -11,86 +9,37 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as OrgaosService from '../../../services/orgaos.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
   TextField,
   Snackbar,
   InputLabel,
-  Select,
-  MenuItem,
   Card,
   CardContent,
   Typography,
-  CardActions,
   Box,
 } from '@mui/material';
-import { Button } from '@coreui/coreui';
 import {
   Add,
-  Money,
-  List,
-  DeliveryDining,
-  RoomService,
-  SoupKitchen,
   AttachMoney,
-  FoodBank,
 } from '@mui/icons-material';
 
-const BasicCard = (props) => {
-  return (
-    <Card
-      sx={{ cursor: 'pointer', backgroundColor: props.color }}
-      style={{ margin: 10, width: 200, height: 200, color: '#fff' }}
-    >
-      <CardContent onClick={props.onClick}>
-        <Typography variant="h5" component="div">
-          {props.usuario.client}
-        </Typography>
-        <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
-        <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
-            : ''}{' '}
-          <div>
-            <AttachMoney /> {props.payment_status}
-          </div>
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-};
-
-BasicCard.propTypes = {
-  onClick: PropTypes.func,
-  usuario: PropTypes.object,
-  color: PropTypes.string,
-  status: PropTypes.string,
-  payment_status: PropTypes.string,
-};
-
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const Orgaos = () => {
+  const [orgaoModalVisible, setOrgaoModalVisible] = React.useState(false);
+  const [addOrgaoModalVisible, setAddOrgaoModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
+  const [currentOrgao, setCurrentOrgao] = React.useState({});
+  const [orgaos, setOrgaos] = React.useState([]);
+  const [newOrgaoData, setNewOrgaoData] = React.useState({
     codigo: '',
     nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
-    situacao_de_registro: '',
+    nome_abreviado: '',
+    poder_vinculado: '',
+    nome_anterior: '',
+    nome_abreviado_anterior: '',
   });
   const [alertBox, setAlertBox] = React.useState({
     visible: false,
@@ -98,28 +47,37 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderOrgaoModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={orgaoModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
+        <CModalHeader closeButton={false} onClose={() => setOrgaoModalVisible(false)}>
           <CModalTitle>Detalhes do usuário</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          Código: <strong>{currentOrgao.codigo}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
+          Nome: <strong>{currentOrgao.nome}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          Nome abreviado: <strong>{currentOrgao.nome_abreviado}</strong>
+        </div>
+        <div style={{ marginLeft: 10, marginTop: 10 }}>
+          Poder vinculado: <strong>{currentOrgao.poder_vinculado}</strong>
+        </div>
+        <div style={{ marginLeft: 10, marginTop: 10 }}>
+          Nome anterior: <strong>{currentOrgao.nome_anterior}</strong>
+        </div>
+        <div style={{ marginLeft: 10, marginTop: 10 }}>
+          Nome abreviado anterior: <strong>{currentOrgao.nome_abreviado_anterior}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteOrgao(currentOrgao.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +86,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setOrgaoModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,26 +95,26 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddOrgaoModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addOrgaoModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddOrgaoModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Órgão</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
           <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewOrgaoData({ ...newOrgaoData, codigo: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newOrgaoData.codigo}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o código"
@@ -164,12 +122,12 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewOrgaoData({
+                ...newOrgaoData,
                 nome: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newOrgaoData.nome}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o nome"
@@ -177,44 +135,68 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
+              setNewOrgaoData({
+                ...newOrgaoData,
+                nome_abreviado: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.cpf}
+            defaultValue={newOrgaoData.nome_abreviado}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o CPF"
+            label="Digite o nome abreviado"
             variant="filled"
           />
-          {/* <InputLabel style={{ marginBottom: 10 }}>
-            Método de Pagamento
-          </InputLabel>
-          <Select
-            value={newUsuarioData.payment_method}
-            onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
-                payment_method: event.target.value,
-              });
-            }}
-          >
-            <MenuItem value="pix">Pix</MenuItem>
-            <MenuItem value="dinheiro">Dinheiro</MenuItem>
-          </Select> */}
+          <TextField
+            onChange={(e) =>
+              setNewOrgaoData({
+                ...newOrgaoData,
+                poder_vinculado: e.target.value,
+              })
+            }
+            defaultValue={newOrgaoData.poder_vinculado}
+            style={{ marginTop: 5, marginBottom: 5 }}
+            id="filled-basic"
+            label="Digite o poder vinculado"
+            variant="filled"
+          />
+          <TextField
+            onChange={(e) =>
+              setNewOrgaoData({
+                ...newOrgaoData,
+                nome_anterior: e.target.value,
+              })
+            }
+            defaultValue={newOrgaoData.nome_anterior}
+            style={{ marginTop: 5, marginBottom: 5 }}
+            id="filled-basic"
+            label="Digite o nome anterior"
+            variant="filled"
+          />
+          <TextField
+            onChange={(e) =>
+              setNewOrgaoData({
+                ...newOrgaoData,
+                nome_abreviado_anterior: e.target.value,
+              })
+            }
+            defaultValue={newOrgaoData.nome_abreviado_anterior}
+            style={{ marginTop: 5, marginBottom: 5 }}
+            id="filled-basic"
+            label="Digite o nome abreviado anterior"
+            variant="filled"
+          />
         </CModalBody>
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddOrgaoModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addOrgao(newOrgaoData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,12 +208,12 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addOrgao = async (orgao) => {
+    const status = await OrgaosService.add(orgao);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Órgão adicionado com sucesso!',
         severity: 'success',
       });
     else
@@ -243,13 +225,13 @@ const Usuarios = () => {
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteOrgao = async (orgao_id) => {
+    const status = await OrgaosService.remove(orgao_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Órgão excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -265,75 +247,60 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
+    setAddOrgaoModalVisible(false);
+    setNewOrgaoData({
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      nome_abreviado: '',
+      poder_vinculado: '',
+      nome_anterior: '',
+      nome_abreviado_anterior: '',
     });
-    atualizarUsuarios();
+    atualizarOrgaos();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
-    // valueGetter: (params) => `${params.row.id || ''}`,
+    { field: 'codigo', headerName: 'Código', width: 200 },
+    { field: 'nome', headerName: 'Nome', width: 200 },
+    { field: 'nome_abreviado', headerName: 'Nome abreviado', width: 200 },
+    { field: 'poder_vinculado', headerName: 'Poder vinculado', width: 200 },
+    { field: 'nome_anterior', headerName: 'Nome anterior', width: 200 },
+    { field: 'nome_abreviado_anterior', headerName: 'Nome abreviado anterior', width: 200 },
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
+    setOrgaoModalVisible(false);
+    setCurrentOrgao({
+      id: '',
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
-      situacao_de_registro: '',
+      nome_abreviado: '',
+      poder_vinculado: '',
+      nome_anterior: '',
+      nome_abreviado_anterior: '',
     });
-    atualizarUsuarios();
+    atualizarOrgaos();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentOrgao(row);
+    setOrgaoModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarOrgaos = async () => {
+    const orgaosAtualizados = await OrgaosService.getAll();
+    setOrgaos(orgaosAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarOrgaos();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {orgaoModalVisible && renderOrgaoModal()}
+      {addOrgaoModalVisible && renderAddOrgaoModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +338,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddOrgaoModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Órgão <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Órgãos</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +351,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={orgaos}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +369,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default Orgaos;

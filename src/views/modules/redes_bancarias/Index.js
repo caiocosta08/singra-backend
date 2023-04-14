@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { renderToString } from 'react-dom/server';
 import {
   CButton,
   CCard,
@@ -11,7 +12,7 @@ import {
   CModalTitle,
   CModalFooter,
 } from '@coreui/react';
-import * as UsuariosService from '../../../services/usuarios.service';
+import * as RedesBancariasService from '../../../services/redes_bancarias.service';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Alert,
@@ -26,6 +27,7 @@ import {
   CardActions,
   Box,
 } from '@mui/material';
+
 import { Button } from '@coreui/coreui';
 import {
   Add,
@@ -38,58 +40,18 @@ import {
   FoodBank,
 } from '@mui/icons-material';
 
-const BasicCard = (props) => {
-  return (
-    <Card
-      sx={{ cursor: 'pointer', backgroundColor: props.color }}
-      style={{ margin: 10, width: 200, height: 200, color: '#fff' }}
-    >
-      <CardContent onClick={props.onClick}>
-        <Typography variant="h5" component="div">
-          {props.usuario.client}
-        </Typography>
-        <Typography sx={{ mb: 1.5 }}>{props.status}</Typography>
-        <Typography sx={{ mb: 1.5 }}>
-          {props.usuario.description !== ''
-            ? 'OBS: ' + props.usuario.description
-            : ''}{' '}
-          <div>
-            <AttachMoney /> {props.payment_status}
-          </div>
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-};
 
-BasicCard.propTypes = {
-  onClick: PropTypes.func,
-  usuario: PropTypes.object,
-  color: PropTypes.string,
-  status: PropTypes.string,
-  payment_status: PropTypes.string,
-};
-
-const Usuarios = () => {
-  const [usuarioModalVisible, setUsuarioModalVisible] = React.useState(false);
-  const [addUsuarioModalVisible, setAddUsuarioModalVisible] =
+const RedesBancarias = () => {
+  const [redeBancariaModalVisible, setRedeBancariaModalVisible] = React.useState(false);
+  const [addRedeBancariaModalVisible, setAddRedeBancariaModalVisible] =
     React.useState(false);
   const [addItemModalVisible, setAddItemModalVisible] = React.useState(false);
-  const [currentUsuario, setCurrentUsuario] = React.useState({});
-  const [usuarios, setUsuarios] = React.useState([]);
-  const [newUsuarioData, setNewUsuarioData] = React.useState({
+  const [currentRedeBancaria, setCurrentRedeBancaria] = React.useState({});
+  const [redesBancarias, setRedesBancarias] = React.useState([]);
+  const [newRedeBancariaData, setNewRedeBancariaData] = React.useState({
     codigo: '',
     nome: '',
-    cpf: '',
-    matricula: '',
-    email_institucional: '',
-    email_pessoal: '',
-    telefone: '',
-    telefone_whatsapp: '',
-    orgao_id: '',
-    unidade_gestora_id: '',
-    setor_administrativo_id: '',
-    cargo_id: '',
+    nome_abreviado: '',
     situacao_de_registro: '',
   });
   const [alertBox, setAlertBox] = React.useState({
@@ -98,28 +60,31 @@ const Usuarios = () => {
     severity: 'success',
   });
 
-  const renderUsuarioModal = () => {
+  const renderRedeBancariaModal = () => {
     return (
       <CModal
-        visible={usuarioModalVisible}
+        visible={redeBancariaModalVisible}
       >
-        <CModalHeader closeButton={false} onClose={() => setUsuarioModalVisible(false)}>
-          <CModalTitle>Detalhes do usuário</CModalTitle>
+        <CModalHeader closeButton={false} onClose={() => setRedeBancariaModalVisible(false)}>
+          <CModalTitle>Detalhes do rede namc</CModalTitle>
         </CModalHeader>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Código: <strong>{currentUsuario.codigo}</strong>
+          Código: <strong>{currentRedeBancaria.codigo}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          Nome: <strong>{currentUsuario.nome}</strong>
+          Nome: <strong>{currentRedeBancaria.nome}</strong>
         </div>
         <div style={{ marginLeft: 10, marginTop: 10 }}>
-          CPF: <strong>{currentUsuario.cpf}</strong>
+          Nome abreviado: <strong>{currentRedeBancaria.nome_abreviado}</strong>
+        </div>
+        <div style={{ marginLeft: 10, marginTop: 10 }}>
+          Situação de registro: <strong>{currentRedeBancaria.situacao_de_registro}</strong>
         </div>
         <CModalFooter>
           <CButton
             color="secondary"
             onClick={() =>
-              deleteUsuario(currentUsuario.id).then((res) =>
+              deleteRedeBancaria(currentRedeBancaria.id).then((res) =>
                 res ? deleteSuccess() : {},
               )
             }
@@ -128,7 +93,7 @@ const Usuarios = () => {
           </CButton>
           <CButton
             color="secondary"
-            onClick={() => setUsuarioModalVisible(false)}
+            onClick={() => setRedeBancariaModalVisible(false)}
           >
             Fechar
           </CButton>
@@ -137,26 +102,26 @@ const Usuarios = () => {
     );
   };
 
-  const renderAddUsuarioModal = () => {
+  const renderAddRedeBancariaModal = () => {
     return (
       <CModal
-        visible={addUsuarioModalVisible}
+        visible={addRedeBancariaModalVisible}
       >
         <CModalHeader
           closeButton={false}
           onClose={() => {
-            setAddUsuarioModalVisible(false)
+            setAddRedeBancariaModalVisible(false)
           }}
         >
-          <CModalTitle>Adicionar Usuário</CModalTitle>
+          <CModalTitle>Adicionar Rede Bancária</CModalTitle>
         </CModalHeader>
         <CModalBody style={{ flexDirection: 'column', display: 'flex' }}>
           <InputLabel style={{ marginBottom: 10 }}>Código</InputLabel>
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({ ...newUsuarioData, codigo: e.target.value })
+              setNewRedeBancariaData({ ...newRedeBancariaData, codigo: e.target.value })
             }
-            defaultValue={newUsuarioData.codigo}
+            defaultValue={newRedeBancariaData.codigo}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o código"
@@ -164,12 +129,12 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
+              setNewRedeBancariaData({
+                ...newRedeBancariaData,
                 nome: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.nome}
+            defaultValue={newRedeBancariaData.nome}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
             label="Digite o nome"
@@ -177,44 +142,42 @@ const Usuarios = () => {
           />
           <TextField
             onChange={(e) =>
-              setNewUsuarioData({
-                ...newUsuarioData,
-                cpf: e.target.value,
+              setNewRedeBancariaData({
+                ...newRedeBancariaData,
+                nome_abreviado: e.target.value,
               })
             }
-            defaultValue={newUsuarioData.cpf}
+            defaultValue={newRedeBancariaData.nome_abreviado}
             style={{ marginTop: 5, marginBottom: 5 }}
             id="filled-basic"
-            label="Digite o CPF"
+            label="Digite o nome abreviado"
             variant="filled"
           />
-          {/* <InputLabel style={{ marginBottom: 10 }}>
-            Método de Pagamento
-          </InputLabel>
-          <Select
-            value={newUsuarioData.payment_method}
-            onChange={(event) => {
-              setNewUsuarioData({
-                ...newUsuarioData,
-                payment_method: event.target.value,
-              });
-            }}
-          >
-            <MenuItem value="pix">Pix</MenuItem>
-            <MenuItem value="dinheiro">Dinheiro</MenuItem>
-          </Select> */}
+          <TextField
+            onChange={(e) =>
+              setNewRedeBancariaData({
+                ...newRedeBancariaData,
+                situacao_de_registro: e.target.value,
+              })
+            }
+            defaultValue={newRedeBancariaData.situacao_de_registro}
+            style={{ marginTop: 5, marginBottom: 5 }}
+            id="filled-basic"
+            label="Digite a situação de registro"
+            variant="filled"
+          />
         </CModalBody>
         <CModalFooter>
           <CButton
             color="secondary"
-            onClick={() => setAddUsuarioModalVisible(false)}
+            onClick={() => setAddRedeBancariaModalVisible(false)}
           >
             Fechar
           </CButton>
           <CButton
             color="primary"
             onClick={() =>
-              addUsuario(newUsuarioData).then((res) =>
+              addRedeBancaria(newRedeBancariaData).then((res) =>
                 res ? addSuccess() : {},
               )
             }
@@ -226,30 +189,30 @@ const Usuarios = () => {
     );
   };
 
-  const addUsuario = async (usuario) => {
-    const status = await UsuariosService.add(usuario);
+  const addRedeBancaria = async (redeBancaria) => {
+    const status = await RedesBancariasService.add(redeBancaria);
     if (status)
       setAlertBox({
         visible: true,
-        text: 'Usuário adicionado com sucesso!',
+        text: 'Rede Bancária adicionado com sucesso!',
         severity: 'success',
       });
     else
       setAlertBox({
         visible: true,
-        text: 'Erro ao adicionar usuário.',
+        text: 'Erro ao adicionar rede bancária.',
         severity: 'error',
       });
     return status;
   };
 
-  const deleteUsuario = async (usuario_id) => {
-    const status = await UsuariosService.remove(usuario_id);
+  const deleteRedeBancaria = async (redeBancaria_id) => {
+    const status = await RedesBancariasService.remove(redeBancaria_id);
     if (status) {
       addSuccess()
       setAlertBox({
         visible: true,
-        text: 'Usuário excluído com sucesso!',
+        text: 'Rede Bancária excluído com sucesso!',
         severity: 'success',
       });
     }
@@ -257,7 +220,7 @@ const Usuarios = () => {
       deleteSuccess()
       setAlertBox({
         visible: true,
-        text: 'Erro ao excluir usuário.',
+        text: 'Erro ao excluir rede bancária.',
         severity: 'error',
       });
     }
@@ -265,75 +228,54 @@ const Usuarios = () => {
   };
 
   const addSuccess = async () => {
-    setAddUsuarioModalVisible(false);
-    setNewUsuarioData({
+    setAddRedeBancariaModalVisible(false);
+    setNewRedeBancariaData({
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
+      nome_abreviado: '',
       situacao_de_registro: '',
     });
-    atualizarUsuarios();
+    atualizarRedesBancarias();
   };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 50 },
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 100,
-    },
-    { field: 'nome', headerName: 'Nome', width: 190 },
-    { field: 'cpf', headerName: 'CPF', width: 190 },
-    // valueGetter: (params) => `${params.row.id || ''}`,
+    { field: 'codigo', headerName: 'Código', width: 200 },
+    { field: 'nome', headerName: 'Nome', width: 200 },
+    { field: 'nome_abreviado', headerName: 'Nome abreviado', width: 200 },
+    { field: 'situacao_de_registro', headerName: 'Situação de registro', width: 200 },
   ];
 
   const deleteSuccess = async () => {
-    setUsuarioModalVisible(false);
-    setCurrentUsuario({
+    setRedeBancariaModalVisible(false);
+    setCurrentRedeBancaria({
+      id: '',
       codigo: '',
       nome: '',
-      cpf: '',
-      matricula: '',
-      email_institucional: '',
-      email_pessoal: '',
-      telefone: '',
-      telefone_whatsapp: '',
-      orgao_id: '',
-      unidade_gestora_id: '',
-      setor_administrativo_id: '',
-      cargo_id: '',
+      nome_abreviado: '',
       situacao_de_registro: '',
     });
-    atualizarUsuarios();
+    atualizarRedesBancarias();
   };
 
   const handleOnClickRow = ({ row }) => {
-    setCurrentUsuario(row);
-    setUsuarioModalVisible(true);
+    setCurrentRedeBancaria(row);
+    setRedeBancariaModalVisible(true);
   };
 
-  const atualizarUsuarios = async () => {
-    const usuariosAtualizados = await UsuariosService.getAll();
-    setUsuarios(usuariosAtualizados);
+  const atualizarRedesBancarias = async () => {
+    const redesBancariasAtualizados = await RedesBancariasService.getAll();
+    setRedesBancarias(redesBancariasAtualizados);
   };
 
   React.useEffect(() => {
-    atualizarUsuarios();
+    atualizarRedesBancarias();
   }, []);
 
   return (
     <>
-      {usuarioModalVisible && renderUsuarioModal()}
-      {addUsuarioModalVisible && renderAddUsuarioModal()}
+      {redeBancariaModalVisible && renderRedeBancariaModal()}
+      {addRedeBancariaModalVisible && renderAddRedeBancariaModal()}
       {addItemModalVisible && (
         <ModalAddItem
           visible={addItemModalVisible}
@@ -371,12 +313,12 @@ const Usuarios = () => {
           <CButton
             style={{ margin: 10 }}
             color="primary"
-            onClick={() => setAddUsuarioModalVisible(true)}
+            onClick={() => setAddRedeBancariaModalVisible(true)}
           >
-            Adicionar Usuário <Add style={{ color: '#fff' }} />
+            Adicionar Rede Bancária <Add style={{ color: '#fff' }} />
           </CButton>
         </div>
-        <CCardHeader>Usuários</CCardHeader>
+        <CCardHeader>Redes Bancárias</CCardHeader>
         <Box sx={{ height: '100%', width: '100%' }}>
           <DataGrid
             sx={{
@@ -384,7 +326,7 @@ const Usuarios = () => {
                 cursor: 'pointer',
               },
             }}
-            rows={usuarios}
+            rows={redesBancarias}
             columns={columns}
             initialState={{
               pagination: {
@@ -402,4 +344,4 @@ const Usuarios = () => {
   );
 };
 
-export default Usuarios;
+export default RedesBancarias;
